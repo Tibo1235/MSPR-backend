@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model annonce {
+  id                Int                 @id @default(autoincrement())
+  date_debut        String
+  date_fin          String
+  description       String
+  titre             String
+  garde             users?              @relation("annonceGarde", fields: [gardeId], references: [id])
+  gardeId           Int?
+  proprietaire      users               @relation("annonceProprietaire", fields: [proprietaireId], references: [id])
+  proprietaireId    Int
+  isConseil         Boolean
+  plantesAnnonce    plante[]
+  messages          message[]          
+}
+
+model plante {
+  id                Int                 @id @default(autoincrement())
+  pseudo            String?   
+  espece            String
+  especeIa          String?
+  annonce           annonce             @relation(fields: [annonceId], references: [id])
+  annonceId         Int
+  photosPlante      photo[]
+}
+
+model photo {
+  id                Int                 @id @default(autoincrement())
+  url               String
+  plante            plante?             @relation(fields: [planteId], references: [id])
+  planteId          Int?
+  fiche             fiche?              @relation(fields: [ficheId], references: [id])
+  ficheId           Int?
+  message           message?            @relation(fields: [messageId], references: [id])
+  messageId         Int?
+}
+
+model users {
+  id                Int                 @id @default(autoincrement())
+  email             String              @unique
+  ville             String
+  password          String
+  codePostal        Int
+  pseudo            String
+  role              role                @relation(fields: [roleId], references: [id])
+  roleId            Int
+  annoncesGardees   annonce[]           @relation("annonceGarde")
+  annoncesPossedees annonce[]           @relation("annonceProprietaire")
+  fichesPossedees   fiche[]
+  messagesEnvoyes   message[]           @relation("envoyeur")
+  messageRecu       message[]           @relation("receveur")
+}
+
+model role {
+  id                Int                 @id @default(autoincrement())
+  libelle           String
+  usersRole         users[]
+}
+
+model fiche {
+  id                Int                 @id @default(autoincrement())
+  especes           String
+  contenu           String
+  proprietaire      users               @relation(fields: [proprietaireId], references: [id])
+  proprietaireId    Int
+  photosPlante      photo[]
+}
+
+model message {
+  id                Int                 @id @default(autoincrement())
+  contenu           String
+  envoyeur          users               @relation("envoyeur", fields: [envoyeurId], references: [id])
+  envoyeurId        Int
+  receveur          users               @relation("receveur", fields: [receveurId], references: [id])
+  receveurId        Int
+  annonce           annonce             @relation(fields: [annonceId], references: [id])
+  annonceId         Int
+  date              DateTime            @default(now())
+  salleMessage      salle               @relation(fields: [salleMessageId], references: [id])
+  salleMessageId    Int
+  filePath          photo[]             // Relation avec le modèle photo
+}
+
+model salle {
+  id                Int                 @id @default(autoincrement())
+  libelle           String
+  messages          message[]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
